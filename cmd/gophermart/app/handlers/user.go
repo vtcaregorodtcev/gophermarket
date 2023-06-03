@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -40,13 +39,13 @@ func (uh *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	hash, err := helpers.CredentialsHash(user.Username, user.Password)
+	jwt, err := helpers.GetJWTById(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
 		return
 	}
 
-	c.SetCookie("user", hash, int(time.Now().Add(24*time.Hour).Unix()), "/", "", false, false)
+	c.SetCookie("jwt", jwt, 24*60*60, "/", "", false, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Authentication successful"})
 }
