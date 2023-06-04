@@ -35,12 +35,29 @@ func (s *Storage) CreateUser(ctx context.Context, login, password string) (*mode
 }
 
 func (s *Storage) GetUserByLogin(login string) (*models.User, error) {
-	query := "SELECT id, login, password FROM users WHERE login = $1"
+	query := "SELECT id, login, password, balance, withdrawn FROM users WHERE login = $1"
 
 	row := s.db.QueryRow(query, login)
 
 	user := &models.User{}
-	err := row.Scan(&user.ID, &user.Login, &user.Password)
+	err := row.Scan(&user.ID, &user.Login, &user.Password, &user.Balance, &user.Withdrawn)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // User not found
+		}
+		return nil, err // Other error occurred
+	}
+
+	return user, nil
+}
+
+func (s *Storage) GetUserByID(id uint) (*models.User, error) {
+	query := "SELECT id, login, password, balance, withdrawn FROM users WHERE id = $1"
+
+	row := s.db.QueryRow(query, id)
+
+	user := &models.User{}
+	err := row.Scan(&user.ID, &user.Login, &user.Password, &user.Balance, &user.Withdrawn)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // User not found

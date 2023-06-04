@@ -81,14 +81,38 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 	// Logic to submit an order
 }
 
-// GetOrders endpoint
 func (uh *UserHandler) GetOrders(c *gin.Context) {
-	// Logic to get a list of orders submitted by a user
+	userID := c.MustGet("userID").(float64)
+
+	orders, err := uh.storage.GetOrdersByUserId(uint(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve orders"})
+		return
+	}
+
+	if len(orders) == 0 {
+		c.JSON(http.StatusNoContent, gin.H{"orders": []models.Order{}})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"orders": orders})
 }
 
-// GetBalance endpoint
 func (uh *UserHandler) GetBalance(c *gin.Context) {
-	// Logic to get the current balance of a user
+	userID := c.MustGet("userID").(float64)
+
+	user, err := uh.storage.GetUserByID(uint(userID))
+	if err != nil || user == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve User"})
+		return
+	}
+
+	type data struct {
+		Current   float64 `json:"current"`
+		Withdrawn float64 `json:"withdrawn"`
+	}
+
+	c.JSON(http.StatusOK, data{Current: user.Balance, Withdrawn: user.Withdrawn})
 }
 
 // WithdrawBalance endpoint

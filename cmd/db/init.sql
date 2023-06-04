@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     login VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00
+    balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    withdrawn DECIMAL(10, 2) NOT NULL DEFAULT 0.00
 );
 
 -- Create the orders table if it doesn't exist
@@ -11,6 +12,9 @@ CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     number VARCHAR(255) NOT NULL UNIQUE,
+    status VARCHAR(50) NOT NULL,
+    accrual DECIMAL(10, 2),
+    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
@@ -46,10 +50,11 @@ WHERE
 
 -- Insert orders for the users
 INSERT INTO
-    orders (user_id, number)
+    orders (user_id, number, status)
 SELECT
     u.id,
-    'order1'
+    'order1',
+    'PROCESSING'
 FROM
     users u
 WHERE
@@ -67,7 +72,8 @@ UNION
 ALL
 SELECT
     u.id,
-    'order2'
+    'order2',
+    'PROCESSING'
 FROM
     users u
 WHERE
@@ -85,7 +91,8 @@ UNION
 ALL
 SELECT
     u.id,
-    'order3'
+    'order3',
+    'PROCESSING'
 FROM
     users u
 WHERE
