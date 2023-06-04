@@ -13,7 +13,6 @@ type Storage struct {
 }
 
 func New(dbURI string) *Storage {
-
 	baseDir, _ := os.Getwd()
 	initFilePath := filepath.Join(baseDir, "..", "db", "init.sql")
 
