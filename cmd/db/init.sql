@@ -18,6 +18,16 @@ CREATE TABLE IF NOT EXISTS orders (
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
+CREATE TABLE IF NOT EXISTS withdrawals (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    order_id INT NOT NULL,
+    sum DECIMAL(10, 2) NOT NULL,
+    processed_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (order_id) REFERENCES orders (id)
+);
+
 -- Insert a couple of users
 INSERT INTO
     users (login, password)

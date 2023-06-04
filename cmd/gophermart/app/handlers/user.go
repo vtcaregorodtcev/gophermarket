@@ -90,12 +90,12 @@ func (uh *UserHandler) GetOrders(c *gin.Context) {
 		return
 	}
 
-	if len(orders) == 0 {
-		c.JSON(http.StatusNoContent, gin.H{"orders": []models.Order{}})
+	if len(*orders) == 0 {
+		c.JSON(http.StatusNoContent, []models.Order{})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"orders": orders})
+	c.JSON(http.StatusOK, orders)
 }
 
 func (uh *UserHandler) GetBalance(c *gin.Context) {
@@ -120,7 +120,19 @@ func (uh *UserHandler) WithdrawBalance(c *gin.Context) {
 	// Logic to withdraw balance
 }
 
-// GetWithdrawals endpoint
 func (uh *UserHandler) GetWithdrawals(c *gin.Context) {
-	// Logic to get withdrawal information
+	userID := c.MustGet("userID").(float64)
+
+	withdrawals, err := uh.storage.GetUserWithdrawals(uint(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
+		return
+	}
+
+	if len(*withdrawals) == 0 {
+		c.JSON(http.StatusNoContent, []models.Order{})
+		return
+	}
+
+	c.JSON(http.StatusOK, withdrawals)
 }

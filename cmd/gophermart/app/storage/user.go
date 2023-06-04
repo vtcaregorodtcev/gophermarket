@@ -59,3 +59,41 @@ func (s *Storage) GetUserByLogin(login string) (*models.User, error) {
 func (s *Storage) GetUserByID(id uint) (*models.User, error) {
 	return s.getUserBy("id", fmt.Sprint(id))
 }
+
+func (s *Storage) GetUserWithdrawals(userID uint) (*[](*models.Withdrawal), error) {
+	withdrawals := make([]*models.Withdrawal, 0)
+
+	rows, err := s.db.Query(`
+		SELECT
+			o.number,
+			w.sum,
+			w.processed_at
+		FROM
+			withdrawals w
+		JOIN
+			orders o ON w.order_id = o.id
+		WHERE
+			w.user_id = $1
+		ORDER BY
+			w.processed_at ASC
+	`, userID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var withdrawal models.Withdrawal
+		if err := rows.Scan(&withdrawal.OrderNumber, &withdrawal.Sum, &withdrawal.ProcessedAt); err != nil {
+			return nil, err
+		}
+		withdrawals = append(withdrawals, &withdrawal)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &withdrawals, nil
+}
