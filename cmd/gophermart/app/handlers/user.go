@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"context"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/services"
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/storage"
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/helpers"
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
@@ -86,9 +89,58 @@ func (uh *UserHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Authentication successful"})
 }
 
-// SubmitOrder endpoint
 func (uh *UserHandler) SubmitOrder(c *gin.Context) {
-	// Logic to submit an order
+	userID := c.MustGet("userID").(float64)
+
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
+	}
+	orderNumber := string(body)
+
+	if len(orderNumber) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty request body"})
+		return
+	}
+
+	existingOrder, err := uh.storage.GetOrderByNumber(orderNumber)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
+		return
+	}
+	if existingOrder != nil {
+		if existingOrder.UserID != uint(userID) {
+			c.JSON(http.StatusConflict, gin.H{"error": "Order is already submitted"})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"message": "Order is already submitted by this user"})
+		}
+		return
+	}
+
+	order, err := uh.storage.CreateOrder(c.Request.Context(), orderNumber, uint(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
+		return
+	}
+
+	go func() {
+		accrualService := services.GetAccrualServiceInstance()
+
+		resp, err := accrualService.CalcOrderAccrual(order.ID)
+		if err != nil {
+			// TODO: handle error
+			return
+		}
+
+		err = uh.storage.UpdateOrderAccrualAndUserBalance(context.Background(), order.ID, uint(userID), resp)
+		if err != nil {
+			// TODO: handle error
+			return
+		}
+	}()
+
+	c.JSON(http.StatusAccepted, order)
 }
 
 func (uh *UserHandler) GetOrders(c *gin.Context) {
@@ -125,9 +177,30 @@ func (uh *UserHandler) GetBalance(c *gin.Context) {
 	c.JSON(http.StatusOK, data{Current: user.Balance, Withdrawn: user.Withdrawn})
 }
 
-// WithdrawBalance endpoint
+type withdrawRequest struct {
+	Order string  `json:"order"`
+	Sum   float64 `json:"sum"`
+}
+
 func (uh *UserHandler) WithdrawBalance(c *gin.Context) {
-	// Logic to withdraw balance
+	userID := c.MustGet("userID").(float64)
+
+	var req withdrawRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	err := uh.storage.WithdrawBalance(c.Request.Context(), uint(userID), req.Order, req.Sum)
+	if err != nil {
+		if err == storage.ErrInsufficientBalance {
+			c.JSON(http.StatusPaymentRequired, gin.H{"error": "Insufficient balance"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		}
+	} else {
+		c.JSON(http.StatusOK, gin.H{"message": "Balance withdrawal successful"})
+	}
 }
 
 func (uh *UserHandler) GetWithdrawals(c *gin.Context) {

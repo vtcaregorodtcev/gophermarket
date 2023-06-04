@@ -5,12 +5,14 @@ import (
 
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/handlers"
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/middleware"
+	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/services"
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Config struct {
+	AccrualAddr string
 	DatabaseURI string
 	Addr        string
 }
@@ -24,6 +26,8 @@ type App struct {
 func New(cfg Config) *App {
 	router := gin.Default()
 	storage := storage.New(cfg.DatabaseURI)
+
+	_ = services.NewAccrualService(cfg.AccrualAddr)
 
 	app := &App{
 		cfg:     cfg,
