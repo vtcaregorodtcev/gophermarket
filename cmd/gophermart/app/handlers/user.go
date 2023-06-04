@@ -25,6 +25,11 @@ func (uh *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
+	if len(newUser.Login) == 0 || len(newUser.Password) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty credentials"})
+		return
+	}
+
 	existingUser, err := uh.storage.GetUserByLogin(newUser.Login)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
@@ -56,6 +61,11 @@ func (uh *UserHandler) Login(c *gin.Context) {
 	var credentials models.User
 	if err := c.ShouldBindJSON(&credentials); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(credentials.Login) == 0 || len(credentials.Password) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty credentials"})
 		return
 	}
 
