@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
 )
@@ -34,10 +35,10 @@ func (s *Storage) CreateUser(ctx context.Context, login, password string) (*mode
 	}, nil
 }
 
-func (s *Storage) GetUserByLogin(login string) (*models.User, error) {
-	query := "SELECT id, login, password, balance, withdrawn FROM users WHERE login = $1"
+func (s *Storage) getUserBy(by, what string) (*models.User, error) {
+	query := "SELECT id, login, password, balance, withdrawn FROM users WHERE " + by + " = $1"
 
-	row := s.db.QueryRow(query, login)
+	row := s.db.QueryRow(query, what)
 
 	user := &models.User{}
 	err := row.Scan(&user.ID, &user.Login, &user.Password, &user.Balance, &user.Withdrawn)
@@ -51,19 +52,10 @@ func (s *Storage) GetUserByLogin(login string) (*models.User, error) {
 	return user, nil
 }
 
+func (s *Storage) GetUserByLogin(login string) (*models.User, error) {
+	return s.getUserBy("login", login)
+}
+
 func (s *Storage) GetUserByID(id uint) (*models.User, error) {
-	query := "SELECT id, login, password, balance, withdrawn FROM users WHERE id = $1"
-
-	row := s.db.QueryRow(query, id)
-
-	user := &models.User{}
-	err := row.Scan(&user.ID, &user.Login, &user.Password, &user.Balance, &user.Withdrawn)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // User not found
-		}
-		return nil, err // Other error occurred
-	}
-
-	return user, nil
+	return s.getUserBy("id", fmt.Sprint(id))
 }
