@@ -1,21 +1,22 @@
 -- Create the users table if it doesn't exist
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL
+    login VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00
 );
 
 -- Create the orders table if it doesn't exist
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
-    number VARCHAR(255) NOT NULL,
+    number VARCHAR(255) NOT NULL UNIQUE,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 -- Insert a couple of users
 INSERT INTO
-    users (username, password)
+    users (login, password)
 SELECT
     'user1',
     'password1'
@@ -26,7 +27,7 @@ WHERE
         FROM
             users
         WHERE
-            username = 'user1'
+            login = 'user1'
     )
 UNION
 ALL
@@ -40,7 +41,7 @@ WHERE
         FROM
             users
         WHERE
-            username = 'user2'
+            login = 'user2'
     );
 
 -- Insert orders for the users
@@ -52,7 +53,7 @@ SELECT
 FROM
     users u
 WHERE
-    u.username = 'user1'
+    u.login = 'user1'
     AND NOT EXISTS (
         SELECT
             1
@@ -70,7 +71,7 @@ SELECT
 FROM
     users u
 WHERE
-    u.username = 'user1'
+    u.login = 'user1'
     AND NOT EXISTS (
         SELECT
             1
@@ -88,7 +89,7 @@ SELECT
 FROM
     users u
 WHERE
-    u.username = 'user2'
+    u.login = 'user2'
     AND NOT EXISTS (
         SELECT
             1

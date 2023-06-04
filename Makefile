@@ -24,4 +24,8 @@ stop-db:
 
 stop: stop-db
 
-.PHONY: run-app start-db start stop-db stop
+lint:
+	go vet ./...
+	golangci-lint run ./...
+
+.PHONY: run-app start-db start stop-db stop lint

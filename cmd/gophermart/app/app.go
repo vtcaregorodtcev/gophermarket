@@ -30,22 +30,25 @@ func New() *App {
 func (app *App) Run() {
 	userHandler := handlers.NewUserHandler(app.storage)
 
-	userApi := app.router.Group("/api/user")
+	userAPI := app.router.Group("/api/user")
 	{
-		userApi.POST("/register", userHandler.Register)
-		userApi.POST("/login", userHandler.Login)
+		userAPI.POST("/register", userHandler.Register)
+		userAPI.POST("/login", userHandler.Login)
 
-		userApi.Use(middleware.Auth())
+		userAPI.Use(middleware.Auth())
 		{
-			userApi.POST("/orders", userHandler.SubmitOrder)
-			userApi.GET("/orders", userHandler.GetOrders)
-			userApi.GET("/balance", userHandler.GetBalance)
-			userApi.POST("/balance/withdraw", userHandler.WithdrawBalance)
-			userApi.GET("/withdrawals", userHandler.GetWithdrawals)
+			userAPI.POST("/orders", userHandler.SubmitOrder)
+			userAPI.GET("/orders", userHandler.GetOrders)
+			userAPI.GET("/balance", userHandler.GetBalance)
+			userAPI.POST("/balance/withdraw", userHandler.WithdrawBalance)
+			userAPI.GET("/withdrawals", userHandler.GetWithdrawals)
 		}
 	}
 
-	app.router.Run(":8080")
+	err := app.router.Run(":8080")
+	if err != nil {
+		fmt.Println("app starting err:", err)
+	}
 }
 
 func (app *App) Shutdown() {

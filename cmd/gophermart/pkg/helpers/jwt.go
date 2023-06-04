@@ -6,14 +6,14 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const JWT_SECRET = "JWT_SECRET"
+const JwtSecret = "JWT_SECRET"
 
-func GetJWTById(id uint) (string, error) {
+func GetJWTByID(id uint) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id": id,
 	})
 
-	return token.SignedString([]byte(JWT_SECRET))
+	return token.SignedString([]byte(JwtSecret))
 }
 
 func ValidateJWT(tokenString string) (jwt.Claims, error) {
@@ -21,7 +21,7 @@ func ValidateJWT(tokenString string) (jwt.Claims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(JWT_SECRET), nil
+		return []byte(JwtSecret), nil
 	})
 
 	if err != nil {

@@ -24,6 +24,32 @@ func (uh *UserHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	existingUser, err := uh.storage.GetUserByLogin(newUser.Login)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
+		return
+	}
+	if existingUser != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Login is already taken"})
+		return
+	}
+
+	user, err := uh.storage.CreateUser(c.Request.Context(), newUser.Login, newUser.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
+		return
+	}
+
+	jwt, err := helpers.GetJWTByID(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
+		return
+	}
+
+	c.SetCookie("jwt", jwt, 24*60*60, "/", "", false, false)
+
+	c.JSON(http.StatusOK, gin.H{"message": "User successfully registered and authenticated"})
 }
 
 func (uh *UserHandler) Login(c *gin.Context) {
@@ -33,13 +59,13 @@ func (uh *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := uh.storage.GetUserByUsername(credentials.Username)
+	user, err := uh.storage.GetUserByLogin(credentials.Login)
 	if err != nil || user == nil || user.Password != credentials.Password {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	jwt, err := helpers.GetJWTById(user.ID)
+	jwt, err := helpers.GetJWTByID(user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
 		return
