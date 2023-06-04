@@ -179,8 +179,8 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 	defer func() { _ = tx.Rollback() }()
 
 	query := `INSERT INTO orders (number, user_id, status) VALUES ($1, $2, $3) RETURNING id`
-	var orderId uint
-	err = tx.QueryRowContext(ctx, query, orderNumber, userID, models.PROCESSED).Scan(&orderId)
+	var orderID uint
+	err = tx.QueryRowContext(ctx, query, orderNumber, userID, models.PROCESSED).Scan(&orderID)
 	if err != nil {
 		return err
 	}
@@ -199,8 +199,8 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 	}
 
 	query = `INSERT INTO withdrawals (user_id, order_id, sum) VALUES ($1, $2, $3) RETURNING id`
-	var wId uint
-	err = tx.QueryRowContext(ctx, query, userID, orderId, withdrawalAmount).Scan(&wId)
+	var wID uint
+	err = tx.QueryRowContext(ctx, query, userID, orderID, withdrawalAmount).Scan(&wID)
 	if err != nil {
 		return err
 	}
