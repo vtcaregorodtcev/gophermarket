@@ -5,6 +5,9 @@ export DB_HOST=localhost
 export DB_PORT=5432
 export DB_NAME=gophermart
 
+export RUN_ADDRESS=:8080
+export DATABASE_URI=host=localhost port=5432 user=postgres password=postgres dbname=gophermart sslmode=disable
+
 start-db:
 	docker start $(CONTAINER_NAME) || docker run -d --name $(CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) \
 		-e POSTGRES_USER=$(DB_USERNAME) -e POSTGRES_PASSWORD=$(DB_PASSWORD) \

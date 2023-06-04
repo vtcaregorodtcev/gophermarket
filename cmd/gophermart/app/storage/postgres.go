@@ -2,7 +2,6 @@ package storage
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -13,12 +12,7 @@ type Storage struct {
 	db *sql.DB
 }
 
-func New() *Storage {
-	dbUser := os.Getenv("DB_USERNAME")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
+func New(dbURI string) *Storage {
 
 	baseDir, _ := os.Getwd()
 	initFilePath := filepath.Join(baseDir, "..", "db", "init.sql")
@@ -28,10 +22,7 @@ func New() *Storage {
 		panic(err)
 	}
 
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
-
-	db, err := sql.Open("postgres", connStr)
+	db, err := sql.Open("postgres", dbURI)
 	if err != nil {
 		panic(err)
 	}

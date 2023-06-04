@@ -10,16 +10,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Config struct {
+	DatabaseURI string
+	Addr        string
+}
+
 type App struct {
+	cfg     Config
 	router  *gin.Engine
 	storage *storage.Storage
 }
 
-func New() *App {
+func New(cfg Config) *App {
 	router := gin.Default()
-	storage := storage.New()
+	storage := storage.New(cfg.DatabaseURI)
 
 	app := &App{
+		cfg:     cfg,
 		router:  router,
 		storage: storage,
 	}
@@ -45,7 +52,7 @@ func (app *App) Run() {
 		}
 	}
 
-	err := app.router.Run(":8080")
+	err := app.router.Run(app.cfg.Addr)
 	if err != nil {
 		fmt.Println("app starting err:", err)
 	}
