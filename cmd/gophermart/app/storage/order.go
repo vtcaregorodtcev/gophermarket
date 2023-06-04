@@ -4,7 +4,7 @@ import (
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
 )
 
-func (s *Storage) GetOrdersByUserId(userID uint) ([]models.Order, error) {
+func (s *Storage) GetOrdersByUserID(userID uint) ([]models.Order, error) {
 	var orders []models.Order
 
 	rows, err := s.db.Query("SELECT id, user_id, number, status, accrual, uploaded_at FROM orders WHERE user_id = $1 ORDER BY uploaded_at ASC", userID)

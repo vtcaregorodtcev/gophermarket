@@ -84,7 +84,7 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 func (uh *UserHandler) GetOrders(c *gin.Context) {
 	userID := c.MustGet("userID").(float64)
 
-	orders, err := uh.storage.GetOrdersByUserId(uint(userID))
+	orders, err := uh.storage.GetOrdersByUserID(uint(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve orders"})
 		return
