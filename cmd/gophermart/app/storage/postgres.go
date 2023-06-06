@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -14,11 +15,17 @@ type Storage struct {
 
 func New(dbURI string) *Storage {
 	baseDir, _ := os.Getwd()
-	initFilePath := filepath.Join(baseDir, "..", "db", "init.sql")
+	filepaths := []string{filepath.Join(baseDir, "..", "db", "init.sql"), filepath.Join(baseDir, "cmd", "db", "init.sql")}
 
-	init, err := os.ReadFile(initFilePath)
-	if err != nil {
-		panic(err)
+	var initScript string
+
+	for _, filepath := range filepaths {
+		if init, err := os.ReadFile(filepath); err != nil {
+			// skip, continue searching
+			fmt.Println("init script is not at: ", filepath)
+		} else {
+			initScript = string(init)
+		}
 	}
 
 	db, err := sql.Open("postgres", dbURI)
@@ -31,7 +38,7 @@ func New(dbURI string) *Storage {
 		panic(err)
 	}
 
-	_, err = db.Exec(string(init))
+	_, err = db.Exec(initScript)
 	if err != nil {
 		panic(err)
 	}
