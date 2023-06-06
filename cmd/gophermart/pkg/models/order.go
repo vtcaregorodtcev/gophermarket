@@ -7,7 +7,7 @@ import (
 type OrderStatus string
 
 const (
-	REGISTERED OrderStatus = "REGISTERED"
+	NEW        OrderStatus = "NEW"
 	INVALID    OrderStatus = "INVALID"
 	PROCESSING OrderStatus = "PROCESSING"
 	PROCESSED  OrderStatus = "PROCESSED"

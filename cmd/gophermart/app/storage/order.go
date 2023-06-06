@@ -100,7 +100,7 @@ func (s *Storage) CreateOrder(ctx context.Context, orderNumber string, userID ui
 
 	query := `INSERT INTO orders (number, user_id, status) VALUES ($1, $2, $3) RETURNING id`
 	var id uint
-	err = tx.QueryRowContext(ctx, query, orderNumber, userID, models.REGISTERED).Scan(&id)
+	err = tx.QueryRowContext(ctx, query, orderNumber, userID, models.NEW).Scan(&id)
 
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (s *Storage) CreateOrder(ctx context.Context, orderNumber string, userID ui
 	return &models.Order{
 		ID:     id,
 		Number: orderNumber,
-		Status: models.REGISTERED,
+		Status: models.NEW,
 	}, nil
 }
 
