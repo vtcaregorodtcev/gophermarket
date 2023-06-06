@@ -102,6 +102,7 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 		return
 	}
 	orderNumber := string(body)
+	uh.log.Info().Msgf("SubmitOrder with order number: %s", orderNumber)
 
 	if len(orderNumber) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty request body"})
