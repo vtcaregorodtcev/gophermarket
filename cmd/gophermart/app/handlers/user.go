@@ -206,9 +206,12 @@ func (uh *UserHandler) WithdrawBalance(c *gin.Context) {
 
 	err := uh.storage.WithdrawBalance(c.Request.Context(), uint(userID), req.Order, req.Sum)
 	if err != nil {
-		if err == storage.ErrInsufficientBalance {
+		switch err {
+		case storage.ErrInsufficientBalance:
 			c.JSON(http.StatusPaymentRequired, gin.H{"error": "Insufficient balance"})
-		} else {
+		case storage.ErrOrderAlreadyExists:
+			c.JSON(http.StatusPaymentRequired, gin.H{"error": "Cannot proceed withdrawal with existing order"})
+		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		}
 	} else {

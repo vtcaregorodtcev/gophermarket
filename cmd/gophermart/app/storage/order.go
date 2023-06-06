@@ -10,6 +10,7 @@ import (
 )
 
 var ErrInsufficientBalance = errors.New("insufficient balance")
+var ErrOrderAlreadyExists = errors.New("order already exists")
 
 func (s *Storage) GetOrdersByUserID(userID uint) (*[](*models.Order), error) {
 	orders := make([]*models.Order, 0)
@@ -178,6 +179,14 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 		return ErrInsufficientBalance
 	}
 
+	existingOrder, err := s.GetOrderByNumber(orderNumber)
+	if err != nil {
+		return err
+	}
+	if existingOrder != nil {
+		return ErrOrderAlreadyExists
+	}
+
 	newBalance := user.Balance - withdrawalAmount
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -193,14 +202,14 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 		return err
 	}
 
-	uStmt, err := tx.PrepareContext(ctx, "UPDATE users SET balance = $1 WHERE id = $2")
+	uStmt, err := tx.PrepareContext(ctx, "UPDATE users SET balance = $1, withdrawn = withdrawn + $2 WHERE id = $3")
 	if err != nil {
 		_ = tx.Rollback()
 		return err
 	}
 	defer uStmt.Close()
 
-	_, err = uStmt.ExecContext(ctx, newBalance, userID)
+	_, err = uStmt.ExecContext(ctx, newBalance, withdrawalAmount, userID)
 	if err != nil {
 		_ = tx.Rollback()
 		return err
