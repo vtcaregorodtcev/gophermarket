@@ -109,6 +109,11 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 		return
 	}
 
+	if isValid := helpers.IsOrderNumberValid(orderNumber); !isValid {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Wrong order format"})
+		return
+	}
+
 	existingOrder, err := uh.storage.GetOrderByNumber(orderNumber)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
