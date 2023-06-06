@@ -1,6 +1,12 @@
 package services
 
-import "github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
+)
 
 type AccrualService struct {
 	addr string
@@ -19,13 +25,30 @@ func GetAccrualServiceInstance() *AccrualService {
 }
 
 type CalcOrderAccrualResponse struct {
-	Accrual float64
-	Status  models.OrderStatus
+	Order   string             `json:"order"`
+	Accrual float64            `json:"accrual"`
+	Status  models.OrderStatus `json:"status"`
 }
 
-func (s *AccrualService) CalcOrderAccrual(orderID uint) (*CalcOrderAccrualResponse, error) {
-	return &CalcOrderAccrualResponse{
-		Accrual: 100.0,
-		Status:  models.PROCESSED,
-	}, nil
+func (s *AccrualService) CalcOrderAccrual(orderNumber string) (*CalcOrderAccrualResponse, error) {
+	url := fmt.Sprintf("%s/api/orders/%s", s.addr, orderNumber)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var response CalcOrderAccrualResponse
+
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }

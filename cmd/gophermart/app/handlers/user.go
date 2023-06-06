@@ -127,7 +127,7 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 	go func() {
 		accrualService := services.GetAccrualServiceInstance()
 
-		resp, err := accrualService.CalcOrderAccrual(order.ID)
+		resp, err := accrualService.CalcOrderAccrual(order.Number)
 		if err != nil {
 			// TODO: handle error
 			return

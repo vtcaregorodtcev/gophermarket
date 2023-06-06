@@ -15,7 +15,12 @@ type Storage struct {
 
 func New(dbURI string) *Storage {
 	baseDir, _ := os.Getwd()
-	filepaths := []string{filepath.Join(baseDir, "..", "db", "init.sql"), filepath.Join(baseDir, "cmd", "db", "init.sql")}
+	filepaths := []string{
+		// works from make script
+		filepath.Join(baseDir, "..", "db", "init.sql"),
+		// works from binary
+		filepath.Join(baseDir, "cmd", "db", "init.sql"),
+	}
 
 	var initScript string
 
