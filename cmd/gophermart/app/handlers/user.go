@@ -4,21 +4,25 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/services"
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/storage"
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/helpers"
+	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/logger"
 	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
 )
 
 type UserHandler struct {
 	storage *storage.Storage
+	log     *zerolog.Logger
 }
 
 func NewUserHandler(storage *storage.Storage) *UserHandler {
-	return &UserHandler{storage: storage}
+	return &UserHandler{storage: storage, log: logger.NewLogger("USER_HANDLER")}
 }
 
 func (uh *UserHandler) Register(c *gin.Context) {
@@ -127,15 +131,18 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 	go func() {
 		accrualService := services.GetAccrualServiceInstance()
 
-		resp, err := accrualService.CalcOrderAccrual(order.Number)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
+		defer cancel()
+
+		resp, err := accrualService.CalcOrderAccrual(ctx, order.Number)
 		if err != nil {
-			// TODO: handle error
+			uh.log.Info().Err(err)
 			return
 		}
 
-		err = uh.storage.UpdateOrderAccrualAndUserBalance(context.Background(), order.ID, uint(userID), resp)
+		err = uh.storage.UpdateOrderAccrualAndUserBalance(ctx, order.ID, uint(userID), resp)
 		if err != nil {
-			// TODO: handle error
+			uh.log.Info().Err(err)
 			return
 		}
 	}()

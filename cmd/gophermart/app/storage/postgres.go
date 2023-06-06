@@ -7,10 +7,13 @@ import (
 	"path/filepath"
 
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
+	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/logger"
 )
 
 type Storage struct {
-	db *sql.DB
+	db  *sql.DB
+	log *zerolog.Logger
 }
 
 func New(dbURI string) *Storage {
@@ -48,7 +51,7 @@ func New(dbURI string) *Storage {
 		panic(err)
 	}
 
-	return &Storage{db: db}
+	return &Storage{db: db, log: logger.NewLogger("STORAGE")}
 }
 
 func (s *Storage) Close() error {

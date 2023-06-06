@@ -119,6 +119,8 @@ func (s *Storage) CreateOrder(ctx context.Context, orderNumber string, userID ui
 }
 
 func (s *Storage) UpdateOrderAccrualAndUserBalance(ctx context.Context, orderID uint, userID uint, accrualResp *services.CalcOrderAccrualResponse) error {
+	s.log.Info().Msgf("UpdateOrderAccrualAndUserBalance params: orderID: %d, userID: %d", orderID, userID)
+
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -157,6 +159,8 @@ func (s *Storage) UpdateOrderAccrualAndUserBalance(ctx context.Context, orderID 
 		return err
 	}
 
+	s.log.Info().Msg("UpdateOrderAccrualAndUserBalance: Successfully updated")
+
 	return nil
 }
 
@@ -165,6 +169,10 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 	if err != nil {
 		return err
 	}
+
+	s.log.Info().Msgf(
+		"WithdrawBalance with: orderNumber: %s, withdrawalAmount: %f, userID: %d, userBalance: %f",
+		orderNumber, withdrawalAmount, userID, user.Balance)
 
 	if user.Balance < withdrawalAmount {
 		return ErrInsufficientBalance
@@ -210,6 +218,8 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 		_ = tx.Rollback()
 		return err
 	}
+
+	s.log.Info().Msg("WithdrawBalance: Successfully updated")
 
 	return nil
 }
