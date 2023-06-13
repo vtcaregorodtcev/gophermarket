@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
+	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
 
 func (s *Storage) CreateUser(ctx context.Context, login, password string) (*models.User, error) {

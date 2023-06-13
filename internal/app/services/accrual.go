@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/logger"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
+	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
+	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
 
 type AccrualService struct {

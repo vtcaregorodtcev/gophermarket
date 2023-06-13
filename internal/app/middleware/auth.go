@@ -6,7 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/helpers"
+	"github.com/vtcaregorodtcev/gophermarket/internal/helpers"
 )
 
 func Auth() gin.HandlerFunc {

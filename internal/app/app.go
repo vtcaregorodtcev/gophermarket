@@ -3,10 +3,10 @@ package app
 import (
 	"fmt"
 
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/handlers"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/middleware"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/services"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/storage"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/handlers"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/middleware"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage"
 
 	"github.com/gin-gonic/gin"
 )

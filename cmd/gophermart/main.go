@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/helpers"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app"
+	"github.com/vtcaregorodtcev/gophermarket/internal/helpers"
 )
 
 func main() {

@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/services"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
+	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
 
 var ErrInsufficientBalance = errors.New("insufficient balance")

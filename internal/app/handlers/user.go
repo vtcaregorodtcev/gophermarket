@@ -9,11 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/services"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/app/storage"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/helpers"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/logger"
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/models"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage"
+	"github.com/vtcaregorodtcev/gophermarket/internal/helpers"
+	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
+	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
 
 type UserHandler struct {

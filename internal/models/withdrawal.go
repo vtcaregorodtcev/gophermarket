@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/vtcaregorodtcev/gophermarket/cmd/gophermart/pkg/helpers"
+	"github.com/vtcaregorodtcev/gophermarket/internal/helpers"
 )
 
 type Withdrawal struct {
