@@ -6,22 +6,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/rs/zerolog"
 	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
 	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
 
 type AccrualService struct {
 	addr string
-	log  *zerolog.Logger
 }
 
 var accrualServiceInstance *AccrualService
 
-func NewAccrualService(addr string) *AccrualService {
-	accrualServiceInstance = &AccrualService{addr: addr, log: logger.NewLogger("ACCRUAL_SERVICE")}
-
-	return accrualServiceInstance
+func NewAccrualService(addr string) {
+	accrualServiceInstance = &AccrualService{addr: addr}
 }
 
 func GetAccrualServiceInstance() *AccrualService {
@@ -49,7 +45,7 @@ func (s *AccrualService) CalcOrderAccrual(ctx context.Context, orderNumber strin
 	}
 	defer resp.Body.Close()
 
-	s.log.Info().Msgf("CalcOrderAccrual response status: %d", resp.StatusCode)
+	logger.Infof("CalcOrderAccrual response status: %d", resp.StatusCode)
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
@@ -63,7 +59,7 @@ func (s *AccrualService) CalcOrderAccrual(ctx context.Context, orderNumber strin
 
 	r, err := json.Marshal(response)
 	if err == nil {
-		s.log.Info().Msgf("CalcOrderAccrual response: %s", r)
+		logger.Infof("CalcOrderAccrual response: %s", r)
 	}
 
 	return &response, nil

@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
+	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
 	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
 
@@ -58,7 +59,7 @@ func (s *Storage) GetOrdersByUserID(userID uint) (*[](*models.Order), error) {
 	return &orders, nil
 }
 
-func (s *Storage) GetOrderByNumber(orderNumber string) (*models.Order, error) {
+func (s *Storage) GetOrderByNumber(tx *sql.Tx, orderNumber string) (*models.Order, error) {
 	query := `
 		SELECT
 			id,
@@ -72,7 +73,12 @@ func (s *Storage) GetOrderByNumber(orderNumber string) (*models.Order, error) {
 		WHERE
 			number = $1`
 
-	row := s.db.QueryRow(query, orderNumber)
+	var row *sql.Row
+	if tx != nil {
+		row = tx.QueryRow(query, orderNumber)
+	} else {
+		row = s.db.QueryRow(query, orderNumber)
+	}
 
 	var order models.Order
 	if err := row.Scan(
@@ -120,7 +126,7 @@ func (s *Storage) CreateOrder(ctx context.Context, orderNumber string, userID ui
 }
 
 func (s *Storage) UpdateOrderAccrualAndUserBalance(ctx context.Context, orderID uint, userID uint, accrualResp *services.CalcOrderAccrualResponse) error {
-	s.log.Info().Msgf("UpdateOrderAccrualAndUserBalance params: orderID: %d, userID: %d", orderID, userID)
+	logger.Infof("UpdateOrderAccrualAndUserBalance params: orderID: %d, userID: %d", orderID, userID)
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -160,18 +166,24 @@ func (s *Storage) UpdateOrderAccrualAndUserBalance(ctx context.Context, orderID 
 		return err
 	}
 
-	s.log.Info().Msg("UpdateOrderAccrualAndUserBalance: Successfully updated")
+	logger.Infof("UpdateOrderAccrualAndUserBalance: Successfully updated")
 
 	return nil
 }
 
 func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber string, withdrawalAmount float64) error {
-	user, err := s.GetUserByID(userID)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	user, err := s.GetUserByID(tx, userID)
 	if err != nil {
 		return err
 	}
 
-	s.log.Info().Msgf(
+	logger.Infof(
 		"WithdrawBalance with: orderNumber: %s, withdrawalAmount: %f, userID: %d, userBalance: %f",
 		orderNumber, withdrawalAmount, userID, user.Balance)
 
@@ -179,7 +191,7 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 		return ErrInsufficientBalance
 	}
 
-	existingOrder, err := s.GetOrderByNumber(orderNumber)
+	existingOrder, err := s.GetOrderByNumber(tx, orderNumber)
 	if err != nil {
 		return err
 	}
@@ -188,12 +200,6 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 	}
 
 	newBalance := user.Balance - withdrawalAmount
-
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback() }()
 
 	query := `INSERT INTO orders (number, user_id, status) VALUES ($1, $2, $3) RETURNING id`
 	var orderID uint
@@ -228,7 +234,7 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 		return err
 	}
 
-	s.log.Info().Msg("WithdrawBalance: Successfully updated")
+	logger.Infof("WithdrawBalance: Successfully updated")
 
 	return nil
 }

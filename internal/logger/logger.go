@@ -6,9 +6,19 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewLogger(component string) *zerolog.Logger {
-	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02 15:04:05"}
-	logger := zerolog.New(output).With().Str("component", component).Timestamp().Logger()
+var log *zerolog.Logger = nil
 
-	return &logger
+func NewLogger() {
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02 15:04:05"}
+	logger := zerolog.New(output).With().Timestamp().Logger()
+
+	log = &logger
+}
+
+func Infof(format string, args ...interface{}) {
+	if log == nil {
+		NewLogger()
+	}
+
+	log.Info().Msgf(format, args...)
 }

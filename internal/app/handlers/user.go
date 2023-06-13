@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog"
 
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage"
@@ -18,11 +17,10 @@ import (
 
 type UserHandler struct {
 	storage *storage.Storage
-	log     *zerolog.Logger
 }
 
 func NewUserHandler(storage *storage.Storage) *UserHandler {
-	return &UserHandler{storage: storage, log: logger.NewLogger("USER_HANDLER")}
+	return &UserHandler{storage: storage}
 }
 
 func (uh *UserHandler) Register(c *gin.Context) {
@@ -37,7 +35,7 @@ func (uh *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	existingUser, err := uh.storage.GetUserByLogin(newUser.Login)
+	existingUser, err := uh.storage.GetUserByLogin(nil, newUser.Login)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
 		return
@@ -76,7 +74,7 @@ func (uh *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := uh.storage.GetUserByLogin(credentials.Login)
+	user, err := uh.storage.GetUserByLogin(nil, credentials.Login)
 	if err != nil || user == nil || user.Password != credentials.Password {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
@@ -101,8 +99,10 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
 		return
 	}
+	defer c.Request.Body.Close()
+
 	orderNumber := string(body)
-	uh.log.Info().Msgf("SubmitOrder with order number: %s", orderNumber)
+	logger.Infof("SubmitOrder with order number: %s", orderNumber)
 
 	if len(orderNumber) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Empty request body"})
@@ -114,7 +114,7 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 		return
 	}
 
-	existingOrder, err := uh.storage.GetOrderByNumber(orderNumber)
+	existingOrder, err := uh.storage.GetOrderByNumber(nil, orderNumber)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Something went wrong"})
 		return
@@ -142,13 +142,13 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 
 		resp, err := accrualService.CalcOrderAccrual(ctx, order.Number)
 		if err != nil {
-			uh.log.Info().Err(err)
+			logger.Infof("submit order: CalcOrderAccrual: %v", err)
 			return
 		}
 
 		err = uh.storage.UpdateOrderAccrualAndUserBalance(ctx, order.ID, uint(userID), resp)
 		if err != nil {
-			uh.log.Info().Err(err)
+			logger.Infof("submit order: UpdateOrderAccrualAndUserBalance: %v", err)
 			return
 		}
 	}()
@@ -176,7 +176,7 @@ func (uh *UserHandler) GetOrders(c *gin.Context) {
 func (uh *UserHandler) GetBalance(c *gin.Context) {
 	userID := c.MustGet("userID").(float64)
 
-	user, err := uh.storage.GetUserByID(uint(userID))
+	user, err := uh.storage.GetUserByID(nil, uint(userID))
 	if err != nil || user == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve User"})
 		return

@@ -6,21 +6,18 @@ import (
 	"path/filepath"
 
 	_ "github.com/lib/pq"
-	"github.com/rs/zerolog"
 	"github.com/vtcaregorodtcev/gophermarket/internal/helpers"
 	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
 )
 
 type Storage struct {
-	db  *sql.DB
-	log *zerolog.Logger
+	db *sql.DB
 }
 
 func New(dbURI string) *Storage {
 	baseDir, _ := os.Getwd()
-	log := logger.NewLogger("STORAGE")
 
-	log.Info().Msgf("using postress db at: %s", dbURI)
+	logger.Infof("using postress db at: %s", dbURI)
 
 	file := filepath.Join(baseDir, "..", "..", "migrations", "init.sql")
 
@@ -32,7 +29,7 @@ func New(dbURI string) *Storage {
 
 	init, err := os.ReadFile(file)
 	if err != nil {
-		log.Info().Msgf("init script is not found: %v", err)
+		logger.Infof("init script is not found: %v", err)
 	}
 
 	db, err := sql.Open("postgres", dbURI)
@@ -50,7 +47,7 @@ func New(dbURI string) *Storage {
 		panic(err)
 	}
 
-	return &Storage{db: db, log: log}
+	return &Storage{db: db}
 }
 
 func (s *Storage) Close() error {

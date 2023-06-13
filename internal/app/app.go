@@ -1,12 +1,11 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/handlers"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/middleware"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage"
+	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +26,7 @@ func New(cfg Config) *App {
 	router := gin.Default()
 	storage := storage.New(cfg.DatabaseURI)
 
-	_ = services.NewAccrualService(cfg.AccrualAddr)
+	services.NewAccrualService(cfg.AccrualAddr)
 
 	app := &App{
 		cfg:     cfg,
@@ -58,13 +57,13 @@ func (app *App) Run() {
 
 	err := app.router.Run(app.cfg.Addr)
 	if err != nil {
-		fmt.Println("app starting err:", err)
+		logger.Infof("app starting err: %v", err)
 	}
 }
 
 func (app *App) Shutdown() {
 	err := app.storage.Close()
 	if err != nil {
-		fmt.Println("db close error:", err)
+		logger.Infof("db close error: %v", err)
 	}
 }

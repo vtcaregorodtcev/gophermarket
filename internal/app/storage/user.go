@@ -35,10 +35,15 @@ func (s *Storage) CreateUser(ctx context.Context, login, password string) (*mode
 	}, nil
 }
 
-func (s *Storage) getUserBy(by, what string) (*models.User, error) {
+func (s *Storage) getUserBy(tx *sql.Tx, by, what string) (*models.User, error) {
 	query := "SELECT id, login, password, balance, withdrawn FROM users WHERE " + by + " = $1"
 
-	row := s.db.QueryRow(query, what)
+	var row *sql.Row
+	if tx != nil {
+		row = tx.QueryRow(query, what)
+	} else {
+		row = s.db.QueryRow(query, what)
+	}
 
 	user := &models.User{}
 	err := row.Scan(&user.ID, &user.Login, &user.Password, &user.Balance, &user.Withdrawn)
@@ -52,12 +57,12 @@ func (s *Storage) getUserBy(by, what string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *Storage) GetUserByLogin(login string) (*models.User, error) {
-	return s.getUserBy("login", login)
+func (s *Storage) GetUserByLogin(tx *sql.Tx, login string) (*models.User, error) {
+	return s.getUserBy(tx, "login", login)
 }
 
-func (s *Storage) GetUserByID(id uint) (*models.User, error) {
-	return s.getUserBy("id", fmt.Sprint(id))
+func (s *Storage) GetUserByID(tx *sql.Tx, id uint) (*models.User, error) {
+	return s.getUserBy(tx, "id", fmt.Sprint(id))
 }
 
 func (s *Storage) GetUserWithdrawals(userID uint) (*[](*models.Withdrawal), error) {
