@@ -17,12 +17,12 @@ import (
 )
 
 type UserHandler struct {
-	storage        *storage.Storage
+	storage        storage.Storager
 	accrualService *services.AccrualService
 	pool           *workerpool.WorkerPool
 }
 
-func NewUserHandler(storage *storage.Storage, as *services.AccrualService, wp *workerpool.WorkerPool) *UserHandler {
+func NewUserHandler(storage storage.Storager, as *services.AccrualService, wp *workerpool.WorkerPool) *UserHandler {
 	return &UserHandler{storage: storage, accrualService: as, pool: wp}
 }
 

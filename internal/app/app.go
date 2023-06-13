@@ -2,13 +2,13 @@ package app
 
 import (
 	"github.com/gammazero/workerpool"
+	"github.com/gin-gonic/gin"
+
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/handlers"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/middleware"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage"
 	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
-
-	"github.com/gin-gonic/gin"
 )
 
 type Config struct {
@@ -20,7 +20,7 @@ type Config struct {
 type App struct {
 	cfg            Config
 	router         *gin.Engine
-	storage        *storage.Storage
+	storage        storage.Storager
 	accrualService *services.AccrualService
 	pool           *workerpool.WorkerPool
 }

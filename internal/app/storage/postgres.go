@@ -1,14 +1,30 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"path/filepath"
 
 	_ "github.com/lib/pq"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
 	"github.com/vtcaregorodtcev/gophermarket/internal/helpers"
 	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
+	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
+
+type Storager interface {
+	Close() error
+	GetUserByID(tx *sql.Tx, id uint) (*models.User, error)
+	GetUserByLogin(tx *sql.Tx, login string) (*models.User, error)
+	CreateUser(ctx context.Context, login, password string) (*models.User, error)
+	GetOrderByNumber(tx *sql.Tx, orderNumber string) (*models.Order, error)
+	CreateOrder(ctx context.Context, orderNumber string, userID uint) (*models.Order, error)
+	UpdateOrderAccrualAndUserBalance(ctx context.Context, orderID uint, userID uint, accrualResp *services.CalcOrderAccrualResponse) error
+	GetOrdersByUserID(userID uint) (*[](*models.Order), error)
+	WithdrawBalance(ctx context.Context, userID uint, orderNumber string, withdrawalAmount float64) error
+	GetUserWithdrawals(userID uint) (*[](*models.Withdrawal), error)
+}
 
 type Storage struct {
 	db *sql.DB
