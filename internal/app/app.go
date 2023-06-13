@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/gammazero/workerpool"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/handlers"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/middleware"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
@@ -18,9 +19,11 @@ type Config struct {
 }
 
 type App struct {
-	cfg     Config
-	router  *gin.Engine
-	storage *storage.Storage
+	cfg            Config
+	router         *gin.Engine
+	storage        *storage.Storage
+	accrualService *services.AccrualService
+	pool           *workerpool.WorkerPool
 }
 
 func New(cfg Config) *App {
@@ -31,19 +34,22 @@ func New(cfg Config) *App {
 		logger.Infof("storage creating error: %v", err)
 	}
 
-	services.NewAccrualService(cfg.AccrualAddr)
+	wp := workerpool.New(10)
+	as := services.NewAccrualService(cfg.AccrualAddr)
 
 	app := &App{
-		cfg:     cfg,
-		router:  router,
-		storage: storage,
+		cfg:            cfg,
+		router:         router,
+		storage:        storage,
+		accrualService: as,
+		pool:           wp,
 	}
 
 	return app
 }
 
 func (app *App) Run() {
-	userHandler := handlers.NewUserHandler(app.storage)
+	userHandler := handlers.NewUserHandler(app.storage, app.accrualService, app.pool)
 
 	userAPI := app.router.Group("/api/user")
 	{
@@ -71,4 +77,6 @@ func (app *App) Shutdown() {
 	if err != nil {
 		logger.Infof("db close error: %v", err)
 	}
+
+	app.pool.Stop()
 }

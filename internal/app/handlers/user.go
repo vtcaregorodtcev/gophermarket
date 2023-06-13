@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
+	"github.com/gammazero/workerpool"
 	"github.com/gin-gonic/gin"
 
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
@@ -16,11 +18,13 @@ import (
 )
 
 type UserHandler struct {
-	storage *storage.Storage
+	storage        *storage.Storage
+	accrualService *services.AccrualService
+	pool           *workerpool.WorkerPool
 }
 
-func NewUserHandler(storage *storage.Storage) *UserHandler {
-	return &UserHandler{storage: storage}
+func NewUserHandler(storage *storage.Storage, as *services.AccrualService, wp *workerpool.WorkerPool) *UserHandler {
+	return &UserHandler{storage: storage, accrualService: as, pool: wp}
 }
 
 func (uh *UserHandler) Register(c *gin.Context) {
@@ -134,26 +138,28 @@ func (uh *UserHandler) SubmitOrder(c *gin.Context) {
 		return
 	}
 
-	go func() {
-		accrualService := services.GetAccrualServiceInstance()
+	uh.calcAndApplyAccrual(order, uint(userID))
 
+	c.JSON(http.StatusAccepted, order)
+}
+
+func (uh *UserHandler) calcAndApplyAccrual(order *models.Order, userID uint) {
+	uh.pool.Submit(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 		defer cancel()
 
-		resp, err := accrualService.CalcOrderAccrual(ctx, order.Number)
+		resp, err := uh.accrualService.CalcOrderAccrual(ctx, order.Number)
 		if err != nil {
-			logger.Infof("submit order: CalcOrderAccrual: %v", err)
+			log.Printf("submit order: CalcOrderAccrual: %v", err)
 			return
 		}
 
-		err = uh.storage.UpdateOrderAccrualAndUserBalance(ctx, order.ID, uint(userID), resp)
+		err = uh.storage.UpdateOrderAccrualAndUserBalance(ctx, order.ID, userID, resp)
 		if err != nil {
-			logger.Infof("submit order: UpdateOrderAccrualAndUserBalance: %v", err)
+			log.Printf("submit order: UpdateOrderAccrualAndUserBalance: %v", err)
 			return
 		}
-	}()
-
-	c.JSON(http.StatusAccepted, order)
+	})
 }
 
 func (uh *UserHandler) GetOrders(c *gin.Context) {

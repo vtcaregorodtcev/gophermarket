@@ -14,14 +14,8 @@ type AccrualService struct {
 	addr string
 }
 
-var accrualServiceInstance *AccrualService
-
-func NewAccrualService(addr string) {
-	accrualServiceInstance = &AccrualService{addr: addr}
-}
-
-func GetAccrualServiceInstance() *AccrualService {
-	return accrualServiceInstance
+func NewAccrualService(addr string) *AccrualService {
+	return &AccrualService{addr: addr}
 }
 
 type CalcOrderAccrualResponse struct {
