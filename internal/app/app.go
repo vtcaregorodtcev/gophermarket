@@ -5,6 +5,7 @@ import (
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/middleware"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage"
+	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage/connector/postgres"
 	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +25,11 @@ type App struct {
 
 func New(cfg Config) *App {
 	router := gin.Default()
-	storage := storage.New(cfg.DatabaseURI)
+
+	storage, err := storage.New(cfg.DatabaseURI, &postgres.PGConnector{})
+	if err != nil {
+		logger.Infof("storage creating error: %v", err)
+	}
 
 	services.NewAccrualService(cfg.AccrualAddr)
 
