@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
@@ -150,13 +149,13 @@ func (uh *UserHandler) calcAndApplyAccrual(order *models.Order, userID uint) {
 
 		resp, err := uh.accrualService.CalcOrderAccrual(ctx, order.Number)
 		if err != nil {
-			log.Printf("submit order: CalcOrderAccrual: %v", err)
+			logger.Infof("submit order: CalcOrderAccrual: %v", err)
 			return
 		}
 
 		err = uh.storage.UpdateOrderAccrualAndUserBalance(ctx, order.ID, userID, resp)
 		if err != nil {
-			log.Printf("submit order: UpdateOrderAccrualAndUserBalance: %v", err)
+			logger.Infof("submit order: UpdateOrderAccrualAndUserBalance: %v", err)
 			return
 		}
 	})

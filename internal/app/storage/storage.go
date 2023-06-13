@@ -2,12 +2,12 @@ package storage
 
 import (
 	"database/sql"
-	"log"
 	"os"
 	"path/filepath"
 
 	_ "github.com/lib/pq"
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage/connector"
+	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
 )
 
 type Storage struct {
@@ -17,7 +17,7 @@ type Storage struct {
 func (s *Storage) init() error {
 	baseDir, _ := os.Getwd()
 
-	log.Printf("using PostgreSQL DB")
+	logger.Infof("using PostgreSQL DB")
 
 	file := filepath.Join(baseDir, "..", "..", "migrations", "init.sql")
 
@@ -29,7 +29,7 @@ func (s *Storage) init() error {
 
 	init, err := os.ReadFile(file)
 	if err != nil {
-		log.Printf("init script is not found: %v", err)
+		logger.Infof("init script is not found: %v", err)
 		return err
 	}
 
