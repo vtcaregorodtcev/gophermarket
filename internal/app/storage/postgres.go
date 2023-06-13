@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
+	"github.com/vtcaregorodtcev/gophermarket/internal/helpers"
 	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
 )
 
@@ -19,7 +20,17 @@ func New(dbURI string) *Storage {
 	baseDir, _ := os.Getwd()
 	log := logger.NewLogger("STORAGE")
 
-	init, err := os.ReadFile(filepath.Join(baseDir, "..", "..", "migrations", "init.sql"))
+	log.Info().Msgf("using postress db at: %s", dbURI)
+
+	file := filepath.Join(baseDir, "..", "..", "migrations", "init.sql")
+
+	isDevMode := *helpers.GetStringEnv("DEV_MODE", helpers.StringPtr("false")) == "true"
+
+	if !isDevMode {
+		file = filepath.Join(baseDir, "migrations", "init.sql")
+	}
+
+	init, err := os.ReadFile(file)
 	if err != nil {
 		log.Info().Msgf("init script is not found: %v", err)
 	}

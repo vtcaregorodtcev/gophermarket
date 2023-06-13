@@ -4,6 +4,7 @@ export DB_PASSWORD=postgres
 export DB_HOST=localhost
 export DB_PORT=5432
 export DB_NAME=gophermart
+export DEV_MODE=true
 
 export RUN_ADDRESS=:8080
 export DATABASE_URI=host=localhost port=5432 user=postgres password=postgres dbname=gophermart sslmode=disable

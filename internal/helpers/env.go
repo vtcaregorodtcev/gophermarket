@@ -9,3 +9,7 @@ func GetStringEnv(key string, fallback *string) *string {
 
 	return fallback
 }
+
+func StringPtr(s string) *string {
+	return &s
+}
