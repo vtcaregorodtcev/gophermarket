@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	_ "github.com/lib/pq"
-	"github.com/vtcaregorodtcev/gophermarket/internal/app/storage/connector"
+	"github.com/vtcaregorodtcev/gophermarket/internal/helpers"
 	"github.com/vtcaregorodtcev/gophermarket/internal/logger"
 )
 
@@ -14,14 +14,14 @@ type Storage struct {
 	db *sql.DB
 }
 
-func (s *Storage) init() error {
+func New(dbURI string) *Storage {
 	baseDir, _ := os.Getwd()
 
-	logger.Infof("using PostgreSQL DB")
+	logger.Infof("using postress db at: %s", dbURI)
 
 	file := filepath.Join(baseDir, "..", "..", "migrations", "init.sql")
 
-	isDevMode := os.Getenv("DEV_MODE") == "true"
+	isDevMode := *helpers.GetStringEnv("DEV_MODE", helpers.StringPtr("false")) == "true"
 
 	if !isDevMode {
 		file = filepath.Join(baseDir, "migrations", "init.sql")
@@ -30,31 +30,24 @@ func (s *Storage) init() error {
 	init, err := os.ReadFile(file)
 	if err != nil {
 		logger.Infof("init script is not found: %v", err)
-		return err
 	}
 
-	err = s.db.Ping()
+	db, err := sql.Open("postgres", dbURI)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	_, err = s.db.Exec(string(init))
-	return err
-}
-
-func New(dbURI string, connector connector.Connector) (*Storage, error) {
-	db, err := connector.Connect(dbURI)
+	err = db.Ping()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	storage := &Storage{db: db}
-	err = storage.init()
+	_, err = db.Exec(string(init))
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	return storage, nil
+	return &Storage{db: db}
 }
 
 func (s *Storage) Close() error {
