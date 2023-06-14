@@ -32,4 +32,8 @@ lint:
 	go vet ./...
 	golangci-lint run ./...
 
-.PHONY: run-app start-db start stop-db stop lint
+test:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+
+.PHONY: run-app start-db start stop-db stop lint test

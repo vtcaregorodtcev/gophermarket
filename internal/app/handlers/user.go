@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gammazero/workerpool"
 	"github.com/gin-gonic/gin"
 
 	"github.com/vtcaregorodtcev/gophermarket/internal/app/services"
@@ -16,13 +15,17 @@ import (
 	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
 
+type submitter interface {
+	Submit(task func())
+}
+
 type UserHandler struct {
 	storage        storage.Storager
 	accrualService services.Accrualer
-	pool           *workerpool.WorkerPool
+	pool           submitter
 }
 
-func NewUserHandler(storage storage.Storager, as services.Accrualer, wp *workerpool.WorkerPool) *UserHandler {
+func NewUserHandler(storage storage.Storager, as services.Accrualer, wp submitter) *UserHandler {
 	return &UserHandler{storage: storage, accrualService: as, pool: wp}
 }
 
