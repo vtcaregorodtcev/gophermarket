@@ -10,6 +10,10 @@ import (
 	"github.com/vtcaregorodtcev/gophermarket/internal/models"
 )
 
+type Accrualer interface {
+	CalcOrderAccrual(ctx context.Context, orderNumber string) (*CalcOrderAccrualResponse, error)
+}
+
 type AccrualService struct {
 	addr string
 }

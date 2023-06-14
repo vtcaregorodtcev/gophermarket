@@ -18,11 +18,11 @@ import (
 
 type UserHandler struct {
 	storage        storage.Storager
-	accrualService *services.AccrualService
+	accrualService services.Accrualer
 	pool           *workerpool.WorkerPool
 }
 
-func NewUserHandler(storage storage.Storager, as *services.AccrualService, wp *workerpool.WorkerPool) *UserHandler {
+func NewUserHandler(storage storage.Storager, as services.Accrualer, wp *workerpool.WorkerPool) *UserHandler {
 	return &UserHandler{storage: storage, accrualService: as, pool: wp}
 }
 
