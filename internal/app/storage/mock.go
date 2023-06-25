@@ -14,12 +14,16 @@ type MockStorager struct {
 	mock.Mock
 }
 
+func (m *MockStorager) UpdateOrderStatus(ctx context.Context, orderID uint, status models.OrderStatus) error {
+	return nil
+}
+
 func (m *MockStorager) Close() error {
 	args := m.Called()
 	return args.Error(0)
 }
 
-func (m *MockStorager) GetUserByID(tx *sql.Tx, id uint) (*models.User, error) {
+func (m *MockStorager) GetUserByID(tx *sql.Tx, id uint, forUpdate bool) (*models.User, error) {
 	args := m.Called(tx, id)
 	return args.Get(0).(*models.User), args.Error(1)
 }

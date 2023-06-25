@@ -125,6 +125,62 @@ func (s *Storage) CreateOrder(ctx context.Context, orderNumber string, userID ui
 	}, nil
 }
 
+func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uint, status models.OrderStatus) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	s.LockOrders(ctx, tx, orderID)
+
+	oStmt, err := tx.PrepareContext(ctx, "UPDATE orders SET status = $1 WHERE id = $2")
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	defer oStmt.Close()
+
+	_, err = oStmt.ExecContext(ctx, status, orderID)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) lock(ctx context.Context, tx *sql.Tx, ID uint, what string) error {
+	smt, err := tx.PrepareContext(ctx, "SELECT id FROM "+what+" WHERE id = $1 FOR UPDATE")
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	defer smt.Close()
+
+	_, err = smt.ExecContext(ctx, ID)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) LockUsers(ctx context.Context, tx *sql.Tx, userID uint) error {
+	return s.lock(ctx, tx, userID, "users")
+}
+
+func (s *Storage) LockOrders(ctx context.Context, tx *sql.Tx, orderID uint) error {
+	return s.lock(ctx, tx, orderID, "orders")
+}
+
 func (s *Storage) UpdateOrderAccrualAndUserBalance(ctx context.Context, orderID uint, userID uint, accrualResp *services.CalcOrderAccrualResponse) error {
 	logger.Infof("UpdateOrderAccrualAndUserBalance params: orderID: %d, userID: %d", orderID, userID)
 
@@ -134,6 +190,12 @@ func (s *Storage) UpdateOrderAccrualAndUserBalance(ctx context.Context, orderID 
 	}
 	defer func() { _ = tx.Rollback() }()
 
+	err = s.LockOrders(ctx, tx, orderID)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
 	oStmt, err := tx.PrepareContext(ctx, "UPDATE orders SET accrual = $1, status = $2 WHERE id = $3")
 	if err != nil {
 		_ = tx.Rollback()
@@ -142,6 +204,12 @@ func (s *Storage) UpdateOrderAccrualAndUserBalance(ctx context.Context, orderID 
 	defer oStmt.Close()
 
 	_, err = oStmt.ExecContext(ctx, accrualResp.Accrual, accrualResp.Status, orderID)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	err = s.LockUsers(ctx, tx, userID)
 	if err != nil {
 		_ = tx.Rollback()
 		return err
@@ -178,7 +246,7 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	user, err := s.GetUserByID(tx, userID)
+	user, err := s.GetUserByID(tx, userID, true)
 	if err != nil {
 		return err
 	}
@@ -191,22 +259,7 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 		return ErrInsufficientBalance
 	}
 
-	existingOrder, err := s.GetOrderByNumber(tx, orderNumber)
-	if err != nil {
-		return err
-	}
-	if existingOrder != nil {
-		return ErrOrderAlreadyExists
-	}
-
 	newBalance := user.Balance - withdrawalAmount
-
-	query := `INSERT INTO orders (number, user_id, status) VALUES ($1, $2, $3) RETURNING id`
-	var orderID uint
-	err = tx.QueryRowContext(ctx, query, orderNumber, userID, models.PROCESSED).Scan(&orderID)
-	if err != nil {
-		return err
-	}
 
 	uStmt, err := tx.PrepareContext(ctx, "UPDATE users SET balance = $1, withdrawn = withdrawn + $2 WHERE id = $3")
 	if err != nil {
@@ -221,9 +274,9 @@ func (s *Storage) WithdrawBalance(ctx context.Context, userID uint, orderNumber 
 		return err
 	}
 
-	query = `INSERT INTO withdrawals (user_id, order_id, sum) VALUES ($1, $2, $3) RETURNING id`
+	query := `INSERT INTO withdrawals (user_id, order_id, sum) VALUES ($1, $2, $3) RETURNING id`
 	var wID uint
-	err = tx.QueryRowContext(ctx, query, userID, orderID, withdrawalAmount).Scan(&wID)
+	err = tx.QueryRowContext(ctx, query, userID, orderNumber, withdrawalAmount).Scan(&wID)
 	if err != nil {
 		return err
 	}

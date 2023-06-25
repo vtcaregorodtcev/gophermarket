@@ -35,8 +35,12 @@ func (s *Storage) CreateUser(ctx context.Context, login, password string) (*mode
 	}, nil
 }
 
-func (s *Storage) getUserBy(tx *sql.Tx, by, what string) (*models.User, error) {
+func (s *Storage) getUserBy(tx *sql.Tx, by, what string, forUpdate bool) (*models.User, error) {
 	query := "SELECT id, login, password, balance, withdrawn FROM users WHERE " + by + " = $1"
+
+	if forUpdate {
+		query += " FOR UPDATE"
+	}
 
 	var row *sql.Row
 	if tx != nil {
@@ -58,11 +62,11 @@ func (s *Storage) getUserBy(tx *sql.Tx, by, what string) (*models.User, error) {
 }
 
 func (s *Storage) GetUserByLogin(tx *sql.Tx, login string) (*models.User, error) {
-	return s.getUserBy(tx, "login", login)
+	return s.getUserBy(tx, "login", login, false)
 }
 
-func (s *Storage) GetUserByID(tx *sql.Tx, id uint) (*models.User, error) {
-	return s.getUserBy(tx, "id", fmt.Sprint(id))
+func (s *Storage) GetUserByID(tx *sql.Tx, id uint, forUpdate bool) (*models.User, error) {
+	return s.getUserBy(tx, "id", fmt.Sprint(id), forUpdate)
 }
 
 func (s *Storage) GetUserWithdrawals(userID uint) (*[](*models.Withdrawal), error) {

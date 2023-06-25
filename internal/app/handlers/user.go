@@ -150,17 +150,22 @@ func (uh *UserHandler) calcAndApplyAccrual(order *models.Order, userID uint) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 		defer cancel()
 
+		uh.storage.UpdateOrderStatus(ctx, order.ID, models.PROCESSING)
 		resp, err := uh.accrualService.CalcOrderAccrual(ctx, order.Number)
 		if err != nil {
+			uh.storage.UpdateOrderStatus(ctx, order.ID, models.INVALID)
 			logger.Infof("submit order: CalcOrderAccrual: %v", err)
 			return
 		}
 
 		err = uh.storage.UpdateOrderAccrualAndUserBalance(ctx, order.ID, userID, resp)
 		if err != nil {
+			uh.storage.UpdateOrderStatus(ctx, order.ID, models.INVALID)
 			logger.Infof("submit order: UpdateOrderAccrualAndUserBalance: %v", err)
 			return
 		}
+
+		uh.storage.UpdateOrderStatus(ctx, order.ID, models.PROCESSED)
 	})
 }
 
@@ -184,7 +189,7 @@ func (uh *UserHandler) GetOrders(c *gin.Context) {
 func (uh *UserHandler) GetBalance(c *gin.Context) {
 	userID := c.MustGet("userID").(float64)
 
-	user, err := uh.storage.GetUserByID(nil, uint(userID))
+	user, err := uh.storage.GetUserByID(nil, uint(userID), false)
 	if err != nil || user == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve User"})
 		return
@@ -237,7 +242,7 @@ func (uh *UserHandler) GetWithdrawals(c *gin.Context) {
 	}
 
 	if len(*withdrawals) == 0 {
-		c.JSON(http.StatusNoContent, []models.Order{})
+		c.JSON(http.StatusNoContent, []models.Withdrawal{})
 		return
 	}
 

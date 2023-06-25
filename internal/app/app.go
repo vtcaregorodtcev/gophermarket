@@ -15,6 +15,7 @@ type Config struct {
 	AccrualAddr string
 	DatabaseURI string
 	Addr        string
+	PoolCount   int
 }
 
 type App struct {
@@ -25,11 +26,14 @@ type App struct {
 	pool           *workerpool.WorkerPool
 }
 
-func New(cfg Config) *App {
+func New(cfg Config) (*App, error) {
 	router := gin.Default()
-	storage := storage.New(cfg.DatabaseURI)
+	storage, err := storage.New(cfg.DatabaseURI)
+	if err != nil {
+		return nil, err
+	}
 
-	wp := workerpool.New(10)
+	wp := workerpool.New(cfg.PoolCount)
 	as := services.NewAccrualService(cfg.AccrualAddr)
 
 	app := &App{
@@ -40,7 +44,7 @@ func New(cfg Config) *App {
 		pool:           wp,
 	}
 
-	return app
+	return app, nil
 }
 
 func (app *App) Run() {
