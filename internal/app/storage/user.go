@@ -74,17 +74,15 @@ func (s *Storage) GetUserWithdrawals(userID uint) (*[](*models.Withdrawal), erro
 
 	rows, err := s.db.Query(`
 		SELECT
-			o.number,
-			w.sum,
-			w.processed_at
+			order_id,
+			sum,
+			processed_at
 		FROM
-			withdrawals w
-		JOIN
-			orders o ON w.order_id = o.id
+			withdrawals
 		WHERE
-			w.user_id = $1
+			user_id = $1
 		ORDER BY
-			w.processed_at ASC
+			processed_at ASC
 	`, userID)
 
 	if err != nil {

@@ -153,14 +153,12 @@ func (uh *UserHandler) calcAndApplyAccrual(order *models.Order, userID uint) {
 		uh.storage.UpdateOrderStatus(ctx, order.ID, models.PROCESSING)
 		resp, err := uh.accrualService.CalcOrderAccrual(ctx, order.Number)
 		if err != nil {
-			uh.storage.UpdateOrderStatus(ctx, order.ID, models.INVALID)
 			logger.Infof("submit order: CalcOrderAccrual: %v", err)
 			return
 		}
 
 		err = uh.storage.UpdateOrderAccrualAndUserBalance(ctx, order.ID, userID, resp)
 		if err != nil {
-			uh.storage.UpdateOrderStatus(ctx, order.ID, models.INVALID)
 			logger.Infof("submit order: UpdateOrderAccrualAndUserBalance: %v", err)
 			return
 		}
