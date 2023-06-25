@@ -132,7 +132,11 @@ func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uint, status mo
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	s.LockOrders(ctx, tx, orderID)
+	err = s.LockOrders(ctx, tx, orderID)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	oStmt, err := tx.PrepareContext(ctx, "UPDATE orders SET status = $1 WHERE id = $2")
 	if err != nil {

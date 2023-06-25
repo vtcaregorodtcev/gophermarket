@@ -150,7 +150,11 @@ func (uh *UserHandler) calcAndApplyAccrual(order *models.Order, userID uint) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 		defer cancel()
 
-		uh.storage.UpdateOrderStatus(ctx, order.ID, models.PROCESSING)
+		err := uh.storage.UpdateOrderStatus(ctx, order.ID, models.PROCESSING)
+		if err != nil {
+			logger.Infof("update order status: %v", err)
+		}
+
 		resp, err := uh.accrualService.CalcOrderAccrual(ctx, order.Number)
 		if err != nil {
 			logger.Infof("submit order: CalcOrderAccrual: %v", err)
@@ -163,7 +167,10 @@ func (uh *UserHandler) calcAndApplyAccrual(order *models.Order, userID uint) {
 			return
 		}
 
-		uh.storage.UpdateOrderStatus(ctx, order.ID, models.PROCESSED)
+		err = uh.storage.UpdateOrderStatus(ctx, order.ID, models.PROCESSED)
+		if err != nil {
+			logger.Infof("update order status: %v", err)
+		}
 	})
 }
 
